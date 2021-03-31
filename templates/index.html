@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" href="static/styles.css">
+
+    <title> Image color clustering </title>
+</head>
+<body>
+
+    <!-- import libraries -->
+    <script src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+    <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <div class="content" id="mainContentDiv">
+
+        <div style="font-size: x-large; margin-top: 10px;"> 
+            <img id="colorWheelLogo" src="static/colorwheel.png" height="15" width="15">
+            Image color clustering
+        </div>
+
+        <input type="file" id="imageSelect" name="imageSelect" accept="image/*" style="margin-top: 20px; font-family: Ubuntu;" onchange="displayImg()">               
+        
+        <div>
+            <img id="imgToDisplay" src="" style="display: none; margin-top: 10px;">
+        </div> 
+
+        <div id="buttonDashboard" style="margin-top: 20px; display: none;">
+            Select algorithm:
+            <select name="algorithmSelect" id="algorithmSelect" onchange="selectAlgorithmChange()" style="font-family: Ubuntu;">
+                <option value="km">KMeans</option>
+                <option value="hdb">HDBSCAN</option>
+                <option value="opt">OPTICS</option>
+            </select>
+     
+            <div id="algorithmParameters" style="margin-top: 5px;"></div>
+    
+        </div> 
+        
+        <div>
+            <button id="mainSubmitButton" style="margin-top: 20px; font-family: Ubuntu;"> Submit </button>
+            <span id="submitErrorMsg" class="errorMsg"> 
+                Something went wrong!
+            </span>
+        </div>
+        
+        <div id='chartAreaColorBar' style="width: 600px; height: 50px; margin-top: 10px;">
+        </div>
+
+        <div id='chartArea3D' style="width: 600px; height: 450px; margin-top: 10px;">
+        </div>
+        
+    </div>
+
+    <script src='static/index.js'></script>
+
+</body>
+</html>
