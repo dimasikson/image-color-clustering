@@ -85,7 +85,7 @@ def clustering_main(df, algo_name, algo_params, prune_hdb=-1):
 
         # prune hdb in case specified
         if prune_hdb >= 2:
-            df = _prune_hdb(df.copy())
+            df = _prune_hdb(df.copy(), prune_hdb)
 
     # OPTICS
     elif algo_name == 'opt':
@@ -122,6 +122,8 @@ def _prune_hdb(df, prune_hdb):
 
         # merge 2 closest clusters
         df.loc[df.loc[:, 'cluster'] == c1, 'cluster'] = c2
+    
+    return df
 
 
 def add_PCA(df):
