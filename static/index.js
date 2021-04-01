@@ -1,5 +1,27 @@
 
+// #################### global constants & variables #################
+
 var SUBMIT_IMG_BYPASS = true;
+
+const plotMargin = 0;
+const plotMargin3D = 0;
+
+// changes if device == mobile
+
+const contentMargin = 10;
+const windowMaxWidth = window.innerWidth - contentMargin*2;
+
+const plotWidth = Math.min(600,windowMaxWidth);
+const plotHeight = 450;
+const plotHeightBar = 50;
+
+const maxWidth = Math.min(600,windowMaxWidth);
+const maxHeight = 250;
+
+const dim = 100;
+const approxPixelCount = dim ** 2;
+
+// #################### image functions #################
 
 function displayImg() {
 
@@ -14,9 +36,6 @@ function displayImg() {
         imgDimCalc.src = imgSlot.src;
 
         imgDimCalc.onload = function () {
-
-            const maxHeight = 250;
-            const maxWidth = 600;
 
             var w = this.width;
             var h = this.height;
@@ -126,9 +145,6 @@ function selectAllParameters() {
 
 // ###################### sliders ###################### 
 
-const dim = 100;
-const approxPixelCount = dim ** 2;
-
 const algorithmParameters = {
     'km' : {
         'n_clusters': [2, 4, 7, 10, 15, 20],
@@ -219,13 +235,6 @@ function sumArray(ar) {
 
 // #######################    plots    ##################################
 
-const plotMargin = 0;
-const plotMargin3D = 0;
-
-const plotWidth = 600;
-const plotHeight = 450;
-const plotHeightBar = 50;
-
 function make3DPlot(data, targetDiv){
 
     var traces = [];
@@ -308,7 +317,7 @@ function make3DPlot(data, targetDiv){
         showlegend: false,
     };
 
-    Plotly.newPlot(targetDiv, traces, layout);
+    Plotly.newPlot(targetDiv, traces, layout, {displayModeBar: false});
 
 };
 function makeBarPlot(data, targetDiv){
@@ -392,6 +401,6 @@ function makeBarPlot(data, targetDiv){
         barmode: 'stack',
     };
 
-    Plotly.newPlot(targetDiv, traces, layout, {displayModeBar: false});
+    Plotly.newPlot(targetDiv, traces, layout, {displayModeBar: false, staticPlot: true});
 
 };
