@@ -91,6 +91,7 @@ def clustering_main(df, algo_name, algo_params, prune_hdb=-1):
     elif algo_name == 'opt':
         opt = OPTICS(
             min_samples=int(algo_params['min_samples']),
+            max_eps=algo_params['max_eps'],
         ).fit(df.loc[:, ['r_clust', 'g_clust', 'b_clust']])
         df.loc[:, 'cluster'] = opt.labels_
 

@@ -155,6 +155,7 @@ const algorithmParameters = {
     },
     'opt' : {
         'min_samples': [approxPixelCount / 2000, approxPixelCount / 1000, approxPixelCount / 500, approxPixelCount / 200, approxPixelCount / 100],
+        'max_eps': [0.05, 0.1, 0.2, 0.5],
     },
 };
 
