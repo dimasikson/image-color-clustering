@@ -1,8 +1,12 @@
+:root {
+    --main-font-family: 'Inconsolata';
+}
+
 body, html {
     margin: 0;
     color: black;
     background-color: #ffffff;
-    font-family: Ubuntu;
+    font-family: var(--main-font-family);
     overflow-x: hidden;
     max-width: 100%;
 }
@@ -29,6 +33,51 @@ body {
     display: none;
 }
 
+#imageSelect {
+    margin-top: 20px; 
+    font-family: var(--main-font-family);
+}
+
+#algorithmSelect {
+    font-family: var(--main-font-family);
+}
+
+#mainSubmitButton {
+    margin-top: 20px; 
+    font-family: var(--main-font-family);
+}
+
+#mainHeader {
+    font-size: x-large; 
+    margin-top: 10px;
+}
+
+#imgToDisplay {
+    display: none; 
+    margin-top: 10px;
+}
+
+#buttonDashboard {
+    margin-top: 20px; 
+    display: none;
+}
+
+#algorithmParameters {
+    margin-top: 5px;
+}
+
+#chartAreaColorBar {
+    width: 600px; 
+    height: 50px; 
+    margin-top: 10px;
+}
+
+#chartArea3D {
+    width: 600px; 
+    height: 450px; 
+    margin-top: 10px;
+}
+
 ::-webkit-file-upload-button {
-    font-family: Ubuntu;
+    font-family: var(--main-font-family);
 }

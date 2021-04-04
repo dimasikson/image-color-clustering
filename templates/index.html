@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="ScreenOrientation" content="autoRotate:disabled">
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inconsolata">
     <link rel="stylesheet" href="static/styles.css">
+    <link rel="icon" href="static/colorwheel.png">
 
     <title> Image color clustering </title>
 </head>
@@ -20,41 +21,36 @@
 
     <div class="content" id="mainContentDiv">
 
-        <div style="font-size: x-large; margin-top: 10px;"> 
+        <div id="mainHeader"> 
             <img id="colorWheelLogo" src="static/colorwheel.png" height="15" width="15">
             Image color clustering
         </div>
 
-        <input type="file" id="imageSelect" name="imageSelect" accept="image/*" style="margin-top: 20px; font-family: Ubuntu;" onchange="displayImg()">               
+        <input type="file" id="imageSelect" name="imageSelect" accept="image/*" onchange="displayImg()">               
         
         <div>
-            <img id="imgToDisplay" src="" style="display: none; margin-top: 10px;">
+            <img id="imgToDisplay" src="">
         </div> 
 
-        <div id="buttonDashboard" style="margin-top: 20px; display: none;">
+        <div id="buttonDashboard">
             Select algorithm:
-            <select name="algorithmSelect" id="algorithmSelect" onchange="selectAlgorithmChange()" style="font-family: Ubuntu;">
+            <select name="algorithmSelect" id="algorithmSelect" onchange="selectAlgorithmChange()">
                 <option value="km">KMeans</option>
                 <option value="hdb">HDBSCAN</option>
                 <option value="opt">OPTICS</option>
             </select>
      
-            <div id="algorithmParameters" style="margin-top: 5px;"></div>
+            <div id="algorithmParameters"></div>
     
         </div> 
         
         <div>
-            <button id="mainSubmitButton" style="margin-top: 20px; font-family: Ubuntu;"> Submit </button>
-            <span id="submitErrorMsg" class="errorMsg"> 
-                Something went wrong!
-            </span>
+            <button id="mainSubmitButton"> Submit </button>
+            <span id="submitErrorMsg" class="errorMsg"> Something went wrong! </span>
         </div>
         
-        <div id='chartAreaColorBar' style="width: 600px; height: 50px; margin-top: 10px;">
-        </div>
-
-        <div id='chartArea3D' style="width: 600px; height: 450px; margin-top: 10px;">
-        </div>
+        <div id='chartAreaColorBar'></div>
+        <div id='chartArea3D'></div>
         
     </div>
 
