@@ -27,7 +27,21 @@ On the whole, it's the most stable algorithm for the task of determining color p
 
 Source: https://www.vlfeat.org/overview/kmeans.html
 
-#### 2.1.2 HDBSCAN
+#### 2.1.2 Suggesting the optimal K - Elbow method w/ regularization
+
+The method for suggesting the optimal K is a tweak on the Elbow method. Below are values for the Elbow method (blue line), the Silhouette method (green line) and Elbow method + regularizatoin (orange line).
+
+The normal Elbow method requires manual interpretation, and the Silhouette method is slow to compute. To find a minimum in the Elbow curve, we apply a small regularization parameter:
+
+    alpha * wcss[k] * k^2
+
+Below it's tested on the famous customer segmentation dataset which is often used to introduce people to clustering.
+
+![image](https://user-images.githubusercontent.com/47122797/129456959-179f61f5-fcb9-4fb7-91e1-33e1185d37e0.png)
+
+Source: https://www.kaggle.com/dimasikson/elbow-method-improved-regularization-added
+
+#### 2.1.3 HDBSCAN
 
 HDBSCAN is a hierarchical density-based clustering algorithm, which finds clusters in data of any shape. Overall, it produces highly interesting results, but it is unstable, it needs high amounts of hyperparameter tuning.
 
@@ -37,7 +51,7 @@ Its primary benefits are that it has the ability to ignore noise in the data. Th
 
 Source: https://hdbscan.readthedocs.io/en/latest/soft_clustering_explanation.html
 
-#### 2.1.3 OPTICS
+#### 2.1.4 OPTICS
 
 OPTICS is a flat density-based clustering algorithm, which also finds clusters in data of any shape. 
 
