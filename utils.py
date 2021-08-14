@@ -10,19 +10,23 @@ import cv2
 
 from datetime import datetime
 
+from config import Config as cfg
+
 def process_clustering_request(img, algo_name, algo_params):
 
-    out = {}
-
     # params
-    dim = 100
+    dim = cfg.dim
+    out = {}
 
     # resize image according to dim scale, convert to df
     img = resize_img_scale(img, dim)
     df = img_to_df(img)
 
     # clustering wrapper function, returns df with one more column 'cluster'
-    df = clustering_main(df.copy(), algo_name, algo_params)
+    if algo_name != "orig":
+        df, _ = clustering_main(df.copy(), algo_name, algo_params) 
+    else:
+        df.loc[:, "cluster"] = 0
 
     # add PCA, for later ranking
     df = add_PCA(df.copy())
@@ -31,6 +35,45 @@ def process_clustering_request(img, algo_name, algo_params):
     out = df_to_json(df)
     
     return out
+
+def find_k(img):
+
+    # params
+    dim = cfg.dim
+    sample_frac = 0.2
+    reg_aplha = 0.02
+    wcss = []
+    ks = range(1, 21)
+
+    # resize image according to dim scale, convert to df, sample
+    img = resize_img_scale(img, dim)
+    df = img_to_df(img).sample(frac=sample_frac)
+
+    # iterate to find the inertia
+    for k in ks:
+        _, kmeans = clustering_main(df.copy(), "km", {"n_clusters": k})
+        wcss.append( kmeans.inertia_ )
+
+    # find the opt k
+    wcss, wcss_reg = wcss_apply_reg(wcss, ks, reg_aplha)
+    opt_k = np.argmin( wcss_reg ) + 1
+    
+    return {"k": int(opt_k)}
+
+def rawdata_to_img(rawdata):
+    img = np.asarray(bytearray(rawdata), dtype="uint8")
+    img = cv2.imdecode(img, cv2.IMREAD_COLOR)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    return img
+
+def return_params(form):
+    algo_name = form['algo_name']
+    algo_params = form['algo_params'].split(',')
+    algo_params = {k: cfg.param_types[k](v) for k, v in zip(algo_params[0::2], algo_params[1::2])}
+
+    return algo_name, algo_params
+
 
 def df_to_json(df):
 
@@ -68,37 +111,21 @@ def clustering_main(df, algo_name, algo_params, prune_hdb=-1):
     for c in 'rgb':
         df.loc[:, f'{c}_clust'] = ( df.loc[:, c] - df.loc[:, c].mean() ) / df.loc[:, c].std()
  
-    # KMeans
-    if algo_name == 'km':
-        km = KMeans(
-            n_clusters=int(algo_params['n_clusters']),
-        ).fit(df.loc[:, ['r_clust', 'g_clust', 'b_clust']])
-        df.loc[:, 'cluster'] = km.labels_
+    # select algo
+    if algo_name == 'km': clustClass = KMeans
+    elif algo_name == 'hdb': clustClass = HDBSCAN
+    elif algo_name == 'opt': clustClass = OPTICS
+    else: raise Exception('Invalid algorithm name')
 
-    # HDBSCAN
-    elif algo_name == 'hdb':
-        hdb = HDBSCAN(
-            min_cluster_size=int(algo_params['min_cluster_size']),
-            min_samples=int(algo_params['min_samples']),
-        ).fit(df.loc[:, ['r_clust', 'g_clust', 'b_clust']])
-        df.loc[:, 'cluster'] = hdb.labels_
+    clust = clustClass(**algo_params)
+    clust.fit(df.loc[:, ['r_clust', 'g_clust', 'b_clust']])
+    df.loc[:, 'cluster'] = clust.labels_
 
-        # prune hdb in case specified
-        if prune_hdb >= 2:
-            df = _prune_hdb(df.copy(), prune_hdb)
+    # prune hdb in case specified
+    if prune_hdb >= 2:
+        df = _prune_hdb(df.copy(), prune_hdb)
 
-    # OPTICS
-    elif algo_name == 'opt':
-        opt = OPTICS(
-            min_samples=int(algo_params['min_samples']),
-            max_eps=algo_params['max_eps'],
-        ).fit(df.loc[:, ['r_clust', 'g_clust', 'b_clust']])
-        df.loc[:, 'cluster'] = opt.labels_
-
-    else:
-        raise Exception('Invalid algorithm name')
-
-    return df
+    return df, clust
 
 def _prune_hdb(df, prune_hdb):
 
@@ -135,3 +162,12 @@ def add_PCA(df):
     ).fit_transform(df.loc[:, ['r', 'g', 'b']])
 
     return df
+
+def wcss_apply_reg(wcss, ks, alpha=0.05, epsilon=1e-4):
+
+    max_ss = wcss[0]
+    wcss = np.array(wcss) / max_ss
+
+    wcss_reg = [ss + alpha * ( ss + epsilon ) * (k**2) for ss, k in zip(wcss, ks)]
+    
+    return wcss, np.array(wcss_reg)

@@ -3,20 +3,24 @@
 
 var SUBMIT_IMG_BYPASS = true;
 
+// consts from styles.css
+const fontFamily = getComputedStyle(document.documentElement).getPropertyValue('--main-font-family');
+const mainWidth = getComputedStyle(document.documentElement).getPropertyValue('--main-width');
+
 const plotMargin = 0;
 const plotMargin3D = 0;
 
 // changes if device == mobile
 
-const contentMargin = 10;
+const contentMargin = getComputedStyle(document.documentElement).getPropertyValue('--content-margin');
 const windowMaxWidth = window.innerWidth - contentMargin*2;
 
-const plotWidth = Math.min(600,windowMaxWidth);
-const plotHeight = 450;
-const plotHeightBar = 50;
+const plotWidth = Math.min(mainWidth,windowMaxWidth);
+const plotHeight = getComputedStyle(document.documentElement).getPropertyValue('--plot-height');
+const plotHeightBar = getComputedStyle(document.documentElement).getPropertyValue('--plot-height-bar');
 
-const maxWidth = Math.min(600,windowMaxWidth);
-const maxHeight = 250;
+const maxImgWidth = Math.min(mainWidth,windowMaxWidth);
+const maxImgHeight = 250;
 
 const dim = 100;
 const approxPixelCount = dim ** 2;
@@ -40,8 +44,8 @@ function displayImg() {
             var w = this.width;
             var h = this.height;
 
-            var scaleWidth = w / maxWidth;
-            var scaleHeight = h / maxHeight;
+            var scaleWidth = w / maxImgWidth;
+            var scaleHeight = h / maxImgHeight;
             var maxScale = 1 / Math.max(scaleHeight, scaleWidth);
 
             imgSlot.width = w * maxScale;
@@ -66,6 +70,8 @@ function displayImg() {
 
 };
 
+// #################### request functions #################
+
 document.getElementById('mainSubmitButton').addEventListener('click', () => {
 
     var formData = new FormData();
@@ -86,7 +92,7 @@ document.getElementById('mainSubmitButton').addEventListener('click', () => {
         SUBMIT_IMG_BYPASS = false;
 
         $.ajax({
-            url: '/uploader',
+            url: '/submit',
             type: 'post',
             data: formData,
             contentType: false,
@@ -97,12 +103,12 @@ document.getElementById('mainSubmitButton').addEventListener('click', () => {
                 SUBMIT_IMG_BYPASS = true;
                 fetchedOutput = JSON.parse(response);
 
-                // plots
-                make3DPlot(fetchedOutput, 'chartArea3D')
-                makeBarPlot(fetchedOutput, 'chartAreaColorBar')
+                $('#chartArea3D').hide();
+                $('#chartAreaColorBar').hide();
 
-                $('#chartArea3D').show();
-                $('#chartAreaColorBar').show();
+                // plots
+                make3DPlot(fetchedOutput, 'chartArea3D', paramsObj)
+                makeBarPlot(fetchedOutput, 'chartAreaColorBar', paramsObj)
             
             },    
             error: function(error){
@@ -119,6 +125,34 @@ document.getElementById('mainSubmitButton').addEventListener('click', () => {
     };
 
 });
+
+function findOptK() {
+
+    var formData = new FormData();
+    var imgs = document.getElementById('imageSelect');
+    
+    // Check file selected or not && if another request isn't running
+    if(imgs.files.length >= 1){
+
+        formData.append('file', imgs.files[0]);
+
+        $.ajax({
+            url: '/find_k',
+            type: 'post',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response){
+                k = JSON.parse(response)["k"];
+
+                // trigger suggestion function, which displays the tooltip
+                suggestOptK(k);
+            },    
+        });
+
+    };
+
+};
 
 function selectAllParameters() {
 
@@ -145,9 +179,16 @@ function selectAllParameters() {
 
 // ###################### sliders ###################### 
 
+function range(start, end) {
+	var len = end - start + 1;
+	var a = new Array(len);
+	for (let i = 0; i < len; i++) a[i] = start + i;
+	return a;
+}
+
 const algorithmParameters = {
     'km' : {
-        'n_clusters': [2, 4, 7, 10, 15, 20],
+        'n_clusters': range(1, 20),
     },
     'hdb' : {
         'min_cluster_size': [approxPixelCount / 1000, approxPixelCount / 500, approxPixelCount / 200, approxPixelCount / 100],
@@ -157,6 +198,7 @@ const algorithmParameters = {
         'min_samples': [approxPixelCount / 2000, approxPixelCount / 1000, approxPixelCount / 500, approxPixelCount / 200, approxPixelCount / 100],
         'max_eps': [0.05, 0.1, 0.2, 0.5],
     },
+    'orig': {},
 };
 
 function selectAlgorithmChange() {
@@ -183,6 +225,7 @@ function selectAlgorithmChange() {
         childSlider.type = "range";
         childSlider.min = 0;
         childSlider.max = paramValues.length - 1;
+        childSlider.style.width = "200px";
         childSlider.value = parseInt(paramValues.length * 0.5);
         childSlider.step = 1;
         childSlider.name = "slider:" + algoName + ":" + paramName;
@@ -203,7 +246,13 @@ function selectAlgorithmChange() {
 
         updateSliderDisplay(childSlider);
         
-    };    
+    };
+
+    // clear tooltips below the sliders
+    document.getElementById("mainTooltips").innerHTML = "";
+
+    // find & suggest optimal K, the function is async
+    if (algoName == "km"){ findOptK() }
     
 };    
 
@@ -234,9 +283,22 @@ function sumArray(ar) {
     return ar.reduce((a, b) => a + b, 0);
 };
 
+// #######################    tooltips    ##################################
+
+function suggestOptK(k) {
+
+    var optKElement = document.createElement("span");
+    optKElement.innerHTML = "suggested n_clusters = " + k;
+    optKElement.classList.add('toolTip');
+
+    // append the tooltip element
+    document.getElementById("mainTooltips").appendChild(optKElement);
+
+};
+
 // #######################    plots    ##################################
 
-function make3DPlot(data, targetDiv){
+function make3DPlot(data, targetDiv, paramsObj){
 
     var traces = [];
 
@@ -269,6 +331,8 @@ function make3DPlot(data, targetDiv){
             },
             type: 'scatter3d',
             name:  clusterValues[i],
+            // this key is unused, it's only needed for displaying the original image. Unused keys don't break the plot function
+            marker_color_array: [],
         };
     };
 
@@ -282,6 +346,7 @@ function make3DPlot(data, targetDiv){
         clusters[c]["x"].push(r);
         clusters[c]["y"].push(g);
         clusters[c]["z"].push(b);
+        clusters[c]["marker_color_array"].push([r, g, b]);
 
     };
 
@@ -295,7 +360,8 @@ function make3DPlot(data, targetDiv){
             var g_mean = parseInt( sumArray(cluster["y"]) / cluster["y"].length )
             var b_mean = parseInt( sumArray(cluster["z"]) / cluster["z"].length )  
           
-            clusters[c]["marker"]["color"] = "rgb(" + r_mean + "," + g_mean + "," + b_mean + ")"
+            // if not original image, display means, else display the full array
+            clusters[c]["marker"]["color"] = paramsObj["algo_name"] != "orig" ? "rgb(" + r_mean + "," + g_mean + "," + b_mean + ")" : clusters[c]["marker_color_array"];
             traces.push(cluster);
         
         };
@@ -319,9 +385,13 @@ function make3DPlot(data, targetDiv){
     };
 
     Plotly.newPlot(targetDiv, traces, layout, {displayModeBar: false});
+    $('#chartArea3D').show();
 
 };
-function makeBarPlot(data, targetDiv){
+function makeBarPlot(data, targetDiv, paramsObj){
+
+    // early exit if displaying original image
+    if (paramsObj["algo_name"] == "orig") {return}
 
     var traces = [];
 
@@ -403,5 +473,6 @@ function makeBarPlot(data, targetDiv){
     };
 
     Plotly.newPlot(targetDiv, traces, layout, {displayModeBar: false, staticPlot: true});
+    $('#chartAreaColorBar').show();
 
 };

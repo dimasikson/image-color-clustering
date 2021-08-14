@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import json
 import time
 
-from utils import process_clustering_request
+from utils import process_clustering_request, find_k, rawdata_to_img, return_params
 
 app = Flask(__name__)
 app.secret_key = 'SECRET KEY'
@@ -17,22 +17,31 @@ app.secret_key = 'SECRET KEY'
 def index():
     return render_template('index.html')
 
-@app.route('/uploader', methods=['POST'])
-def upload_file():
+@app.route('/submit', methods=['POST'])
+def main_submit():
 
     # get img from request
     rawdata = request.files['file'].read()
-    img = np.asarray(bytearray(rawdata), dtype="uint8")
-    img = cv2.imdecode(img, cv2.IMREAD_COLOR)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = rawdata_to_img(rawdata)
 
     # get algo name & params from request
-    algo_name = request.form['algo_name']
-    algo_params = request.form['algo_params'].split(',')
-    algo_params = {k: float(v) for k, v in zip(algo_params[0::2], algo_params[1::2])}
+    algo_name, algo_params = return_params(request.form)
 
     # main clustering wrapper
     output = process_clustering_request(img, algo_name, algo_params)
+    json_output = json.dumps(output)
+
+    return json_output
+
+@app.route('/find_k', methods=['POST'])
+def main_find_k():
+
+    # get img from request
+    rawdata = request.files['file'].read()
+    img = rawdata_to_img(rawdata)
+
+    # main clustering wrapper
+    output = find_k(img)
     json_output = json.dumps(output)
 
     return json_output

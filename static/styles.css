@@ -1,5 +1,13 @@
 :root {
     --main-font-family: 'Inconsolata';
+    --main-width: 600;
+    --main-width-px: 600px;
+    --content-margin: 10;
+    --content-margin-px: 10px;
+    --plot-height: 450;
+    --plot-height-px: 450px;
+    --plot-height-bar: 50;
+    --plot-height-bar-px: 50px;
 }
 
 body, html {
@@ -16,8 +24,8 @@ body {
 }
 
 .content {
-    width: 600px;
-    margin: 10px;
+    width: var(--main-width-px);
+    margin: var(--content-margin-px);
     padding-left: 10px;
     display: block;
     margin-left: auto;
@@ -31,6 +39,19 @@ body {
     padding: 2px;
     font-size: 14px;
     display: none;
+}
+
+.toolTipMain {
+    margin-top: 5px;
+}
+
+.toolTip {
+    color: rgb(233, 64, 120); 
+    background-color: rgb(255, 234, 241); 
+    border-radius: 4px; 
+    padding: 2px;
+    margin-top: 5px;
+    font-size: 14px;
 }
 
 #imageSelect {
@@ -67,14 +88,14 @@ body {
 }
 
 #chartAreaColorBar {
-    width: 600px; 
-    height: 50px; 
+    width: var(--main-width-px); 
+    height: var(--plot-height-bar-px); 
     margin-top: 10px;
 }
 
 #chartArea3D {
-    width: 600px; 
-    height: 450px; 
+    width: var(--main-width-px); 
+    height: var(--plot-height-px); 
     margin-top: 10px;
 }
 
