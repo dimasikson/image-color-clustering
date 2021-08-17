@@ -42,22 +42,53 @@ def find_k(img):
     dim = cfg.dim
     sample_frac = 0.2
     reg_aplha = 0.02
-    wcss = []
-    ks = range(1, 21)
+    k_min = 1
+    k_max = 30
+    ks = range(k_min, k_max+1)
 
     # resize image according to dim scale, convert to df, sample
     img = resize_img_scale(img, dim)
     df = img_to_df(img).sample(frac=sample_frac)
 
-    # iterate to find the inertia
-    for k in ks:
-        _, kmeans = clustering_main(df.copy(), "km", {"n_clusters": k})
-        wcss.append( kmeans.inertia_ )
-
-    # find the opt k
-    wcss, wcss_reg = wcss_apply_reg(wcss, ks, reg_aplha)
-    opt_k = np.argmin( wcss_reg ) + 1
+    # initialize wcss with k=1 and store in dp
+    _, kmeans_1 = clustering_main(df.copy(), "km", algo_params = {"n_clusters": 1})
+    wcss_1 = kmeans_1.inertia_
+    dp = {1: 1}
     
+    # perform binary search for optimal k
+    while True:
+
+        # find middle k
+        k_mid = (k_min + k_max) // 2
+
+        # find middle k's in each half
+        k_lo = (k_min + k_mid) // 2
+        k_hi = (k_mid + k_max) // 2
+
+        # find wcss for each k defined above, or retrieve from dp
+        wcss_mid = dp[k_mid] if k_mid in dp else get_wcss_norm(df, k_mid, reg_aplha, wcss_1)
+        wcss_lo = dp[k_lo] if k_lo in dp else get_wcss_norm(df, k_lo, reg_aplha, wcss_1)
+        wcss_hi = dp[k_hi] if k_hi in dp else get_wcss_norm(df, k_hi, reg_aplha, wcss_1)
+
+        # store in dp
+        dp[k_mid] = wcss_mid
+        dp[k_lo] = wcss_lo
+        dp[k_hi] = wcss_hi
+
+        # find lowest wcss from sampled k's
+        wcss_min = np.argmin([wcss_lo, wcss_mid, wcss_hi])
+
+        # reduce search space depending on the answer
+        if wcss_min == 0: k_min, k_max = k_min, k_mid
+        if wcss_min == 1: k_min, k_max = k_lo, k_hi
+        if wcss_min == 2: k_min, k_max = k_mid, k_max
+        
+        # exit condition
+        if k_max == k_min: break
+
+    # check dp for lowest wcss. resulting k_min/k_max is not always the lowest wcss, but the lowest one is guaranteed to be in dp
+    opt_k = min(dp, key=dp.get)
+
     return {"k": int(opt_k)}
 
 def rawdata_to_img(rawdata):
@@ -117,6 +148,7 @@ def clustering_main(df, algo_name, algo_params, prune_hdb=-1):
     elif algo_name == 'opt': clustClass = OPTICS
     else: raise Exception('Invalid algorithm name')
 
+    algo_params["random_state"] = 42
     clust = clustClass(**algo_params)
     clust.fit(df.loc[:, ['r_clust', 'g_clust', 'b_clust']])
     df.loc[:, 'cluster'] = clust.labels_
@@ -163,11 +195,9 @@ def add_PCA(df):
 
     return df
 
-def wcss_apply_reg(wcss, ks, alpha=0.05, epsilon=1e-4):
+def wcss_apply_reg(ss, alpha, k, epsilon=1e-4):
+    return ss + alpha * ( ss + epsilon ) * (k**2)
 
-    max_ss = wcss[0]
-    wcss = np.array(wcss) / max_ss
-
-    wcss_reg = [ss + alpha * ( ss + epsilon ) * (k**2) for ss, k in zip(wcss, ks)]
-    
-    return wcss, np.array(wcss_reg)
+def get_wcss_norm(df, k, alpha, wcss_1):
+    _, kmeans = clustering_main(df, "km", algo_params = {"n_clusters": k})
+    return wcss_apply_reg(kmeans.inertia_ / wcss_1, alpha, k)

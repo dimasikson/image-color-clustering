@@ -145,8 +145,9 @@ function findOptK() {
             success: function(response){
                 k = JSON.parse(response)["k"];
 
-                // trigger suggestion function, which displays the tooltip
-                suggestOptK(k);
+                // check if current algo name is still kmeans
+                var paramsObj = selectAllParameters();
+                if (paramsObj["algo_name"] == "km") { suggestOptK(k) };
             },    
         });
 
@@ -188,7 +189,7 @@ function range(start, end) {
 
 const algorithmParameters = {
     'km' : {
-        'n_clusters': range(1, 20),
+        'n_clusters': range(1, 30),
     },
     'hdb' : {
         'min_cluster_size': [approxPixelCount / 1000, approxPixelCount / 500, approxPixelCount / 200, approxPixelCount / 100],
