@@ -7,6 +7,7 @@ from hdbscan import HDBSCAN
 from scipy.spatial import distance_matrix
 
 import cv2
+import base64
 
 from datetime import datetime
 
@@ -19,7 +20,6 @@ def process_clustering_request(img, algo_name, algo_params):
     out = {}
 
     # resize image according to dim scale, convert to df
-    img = resize_img_scale(img, dim)
     df = img_to_df(img)
 
     # clustering wrapper function, returns df with one more column 'cluster'
@@ -47,7 +47,6 @@ def find_k(img):
     ks = range(k_min, k_max+1)
 
     # resize image according to dim scale, convert to df, sample
-    img = resize_img_scale(img, dim)
     df = img_to_df(img).sample(frac=sample_frac)
 
     # initialize wcss with k=1 and store in dp
@@ -91,11 +90,18 @@ def find_k(img):
 
     return {"k": int(opt_k)}
 
-def rawdata_to_img(rawdata):
-    img = np.asarray(bytearray(rawdata), dtype="uint8")
+def barray_to_img(barray):
+    img = np.asarray(bytearray(barray), dtype="uint8")
     img = cv2.imdecode(img, cv2.IMREAD_COLOR)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
+    return img
+
+def b64_to_img(b64):
+    nparr = np.frombuffer(base64.b64decode(b64), np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+   
     return img
 
 def return_params(form):
@@ -148,7 +154,9 @@ def clustering_main(df, algo_name, algo_params, prune_hdb=-1):
     elif algo_name == 'opt': clustClass = OPTICS
     else: raise Exception('Invalid algorithm name')
 
-    algo_params["random_state"] = 42
+    # add optional parameter(s)
+    if algo_name == 'km': algo_params["random_state"] = 42
+
     clust = clustClass(**algo_params)
     clust.fit(df.loc[:, ['r_clust', 'g_clust', 'b_clust']])
     df.loc[:, 'cluster'] = clust.labels_

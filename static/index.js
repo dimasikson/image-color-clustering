@@ -25,6 +25,9 @@ const maxImgHeight = 250;
 const dim = 100;
 const approxPixelCount = dim ** 2;
 
+// initiate outside of function
+var dataURL;
+
 // #################### image functions #################
 
 function displayImg() {
@@ -32,14 +35,17 @@ function displayImg() {
     var imgs = document.getElementById('imageSelect');
 
     if (imgs.files.length >= 1) {
-        imgSlot = document.getElementById('imgToDisplay');
-        imgSlot.src = window.URL.createObjectURL(imgs.files[0]);
 
-        // img scaling
-        var imgDimCalc = new Image();      
-        imgDimCalc.src = imgSlot.src;
+        // img scaling to display, based on maxWidth and maxHeight
+        var imgToDisplay = new Image();
+        imgSlotToDisplay = document.getElementById('imgToDisplay');
+        imgSlotToDisplay.src = window.URL.createObjectURL(imgs.files[0]);
+        imgToDisplay.src = imgSlotToDisplay.src;
 
-        imgDimCalc.onload = function () {
+        var canvasWidth;
+        var canvasHeight;
+
+        imgToDisplay.onload = function () {
 
             var w = this.width;
             var h = this.height;
@@ -48,15 +54,33 @@ function displayImg() {
             var scaleHeight = h / maxImgHeight;
             var maxScale = 1 / Math.max(scaleHeight, scaleWidth);
 
-            imgSlot.width = w * maxScale;
-            imgSlot.height = h * maxScale;
+            imgSlotToDisplay.width = w * maxScale;
+            imgSlotToDisplay.height = h * maxScale;
+            
+            // scale image to send based on area
+            var areaScale = dim / ((w * h) ** 0.5);
+            canvasWidth = Math.round( w * areaScale );
+            canvasHeight = Math.round( h * areaScale );
+
+            // create empty canvas of dimensions
+            var canvas = document.createElement("canvas");
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            // draw on canvas
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(this, 0, 0, canvasWidth, canvasHeight);
+            
+            // convert to base64
+            dataURL = canvas.toDataURL();
+
+            // display only the img to display element
+            $('#imgToDisplay').show();
+
+            selectAlgorithmChange();
+            $('#buttonDashboard').show();
 
         };
-
-        $('#imgToDisplay').show();
-
-        selectAlgorithmChange();
-        $('#buttonDashboard').show();
 
     } else {
 
@@ -80,7 +104,7 @@ document.getElementById('mainSubmitButton').addEventListener('click', () => {
     // Check file selected or not && if another request isn't running
     if(imgs.files.length >= 1 && SUBMIT_IMG_BYPASS){
 
-        formData.append('file', imgs.files[0]);
+        formData.append('uri', dataURL);
         var paramsObj = selectAllParameters();
 
         for (k in paramsObj){
@@ -134,7 +158,7 @@ function findOptK() {
     // Check file selected or not && if another request isn't running
     if(imgs.files.length >= 1){
 
-        formData.append('file', imgs.files[0]);
+        formData.append('uri', dataURL);
 
         $.ajax({
             url: '/find_k',

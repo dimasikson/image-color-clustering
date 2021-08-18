@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import json
 import time
 
-from utils import process_clustering_request, find_k, rawdata_to_img, return_params
+from utils import process_clustering_request, find_k, barray_to_img, b64_to_img, return_params
 
 app = Flask(__name__)
 app.secret_key = 'SECRET KEY'
@@ -21,8 +21,8 @@ def index():
 def main_submit():
 
     # get img from request
-    rawdata = request.files['file'].read()
-    img = rawdata_to_img(rawdata)
+    b64 = request.form["uri"].split(',')[1]
+    img = b64_to_img(b64)
 
     # get algo name & params from request
     algo_name, algo_params = return_params(request.form)
@@ -37,8 +37,8 @@ def main_submit():
 def main_find_k():
 
     # get img from request
-    rawdata = request.files['file'].read()
-    img = rawdata_to_img(rawdata)
+    b64 = request.form["uri"].split(',')[1]
+    img = b64_to_img(b64)
 
     # main clustering wrapper
     output = find_k(img)
