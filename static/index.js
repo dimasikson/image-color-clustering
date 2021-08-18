@@ -20,7 +20,7 @@ const plotHeight = getComputedStyle(document.documentElement).getPropertyValue('
 const plotHeightBar = getComputedStyle(document.documentElement).getPropertyValue('--plot-height-bar');
 
 const maxImgWidth = Math.min(mainWidth,windowMaxWidth);
-const maxImgHeight = 250;
+const maxImgHeight = 400;
 
 const dim = 100;
 const approxPixelCount = dim ** 2;

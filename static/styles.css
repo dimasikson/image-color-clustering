@@ -1,11 +1,11 @@
 :root {
     --main-font-family: 'Inconsolata';
-    --main-width: 600;
-    --main-width-px: 600px;
+    --main-width: 1000;
+    --main-width-px: 1000px;
     --content-margin: 10;
     --content-margin-px: 10px;
-    --plot-height: 450;
-    --plot-height-px: 450px;
+    --plot-height: 600;
+    --plot-height-px: 600px;
     --plot-height-bar: 50;
     --plot-height-bar-px: 50px;
 }

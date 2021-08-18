@@ -147,7 +147,10 @@ def clustering_main(df, algo_name, algo_params, prune_hdb=-1):
     # standardizing RGB variables
     for c in 'rgb':
         df.loc[:, f'{c}_clust'] = ( df.loc[:, c] - df.loc[:, c].mean() ) / df.loc[:, c].std()
- 
+    
+    # fill na in case standard deviation is 0
+    df = df.fillna(0)
+
     # select algo
     if algo_name == 'km': clustClass = KMeans
     elif algo_name == 'hdb': clustClass = HDBSCAN
